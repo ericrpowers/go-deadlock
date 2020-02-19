@@ -211,6 +211,7 @@ func lock(lockFn func(), ptr interface{}) {
 					Opts.mu.Unlock()
 					lo.mu.Unlock()
 					Opts.OnPotentialDeadlock()
+					zap.L().Fatal("Forcing fatal...")
 					<-ch
 					return
 				case <-ch:
@@ -283,6 +284,7 @@ func (l *lockOrder) preLock(skip int, p interface{}) {
 				l.other(p)
 				Opts.mu.Unlock()
 				Opts.OnPotentialDeadlock()
+				zap.L().Fatal("Forcing fatal...")
 			}
 			continue
 		}
@@ -303,6 +305,7 @@ func (l *lockOrder) preLock(skip int, p interface{}) {
 			l.other(p)
 			Opts.mu.Unlock()
 			Opts.OnPotentialDeadlock()
+			zap.L().Fatal("Forcing fatal...")
 		}
 		l.order[beforeAfter{b, p}] = ss{bs.stack, stack}
 		if len(l.order) == Opts.MaxMapSize { // Reset the map to keep memory footprint bounded.

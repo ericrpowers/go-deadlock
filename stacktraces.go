@@ -3,7 +3,6 @@ package deadlock
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -11,6 +10,8 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+
+	"go.uber.org/zap"
 )
 
 func callers(skip int) []uintptr {
@@ -18,7 +19,7 @@ func callers(skip int) []uintptr {
 	return s[:runtime.Callers(2+skip, s)]
 }
 
-func printStack(w io.Writer, stack []uintptr) {
+func printStack(stack []uintptr) {
 	home := os.Getenv("HOME")
 	usr, err := user.Current()
 	if err == nil {
@@ -39,7 +40,6 @@ func printStack(w io.Writer, stack []uintptr) {
 		}
 		file, line := f.FileLine(pc - 1)
 		if (pkg == "runtime" && name == "goexit") || (pkg == "testing" && name == "tRunner") {
-			fmt.Fprintln(w)
 			return
 		}
 		tail := ""
@@ -60,9 +60,8 @@ func printStack(w io.Writer, stack []uintptr) {
 				clean = s2
 			}
 		}
-		fmt.Fprintf(w, "%s:%d %s.%s %s%s\n", clean, line, pkg, name, code(file, line), tail)
+		zap.L().Warn(fmt.Sprintf("%s:%d %s.%s %s%s\n", clean, line, pkg, name, code(file, line), tail))
 	}
-	fmt.Fprintln(w)
 }
 
 var fileSources struct {
